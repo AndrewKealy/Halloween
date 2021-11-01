@@ -20,13 +20,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.delegate = self
         
         // Show statistics such as fps and timing information
-        sceneView.showsStatistics = true
+        sceneView.showsStatistics = false
         
         // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+      //  let scene = SCNScene(named: "art.scnassets/ship.scn")!
         
         // Set the scene to the view
-        sceneView.scene = scene
+    //    sceneView.scene = scene
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -35,6 +35,11 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
 
+        guard let referenceObjects = ARReferenceObject.referenceObjects(inGroupNamed: "AR Resources", bundle: nil) else {
+            fatalError("Missing expected asset catalog resources.")
+        }
+        configuration.detectionObjects = referenceObjects
+        
         // Run the view's session
         sceneView.session.run(configuration)
     }
@@ -48,14 +53,59 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     // MARK: - ARSCNViewDelegate
     
-/*
+
     // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+   
+        
+        guard let objectAnchor = anchor as? ARObjectAnchor else {return}
+        DispatchQueue.main.async {
+            
+            let scaleThenRotateAndHover = self.getNodeAnimation()
+            let pumpkinNode = self.createPumpkin(withObjectAnchor: objectAnchor)
+            pumpkinNode.scale = (SCNVector3( x: 0.0, y: 0.0, z: 0.0))
+            
+            pumpkinNode.runAction(scaleThenRotateAndHover);
+            node.addChildNode(pumpkinNode)
+        }
+ 
+
     }
-*/
+    
+    //A series of SCNActions to animate the nodes
+    
+    func getNodeAnimation() -> SCNAction {
+        
+        // The node is scaled from zero to half size
+        let scaleAction = SCNAction.scale(to: 0.5, duration: 1)
+        
+        //The node is rotated around its y axis
+        let rotateAction = SCNAction.rotateBy(x: 0, y: Double.pi, z: 0, duration: 5);
+        let hoverUp = SCNAction.moveBy(x: 0, y: 0.2, z: 0, duration: 1.5)
+        let hoverDown = SCNAction.moveBy(x: 0, y: -0.2, z: 0, duration: 1.5)
+        let hoverSequence = SCNAction.sequence([hoverUp, hoverDown])
+        let rotateAndHover = SCNAction.group([rotateAction, hoverSequence])
+        let repeatForever = SCNAction.repeatForever(rotateAndHover)
+        
+        guard let audioSource = SCNAudioSource(fileNamed: "art.scnassets/Pumpkin.mp3") else { fatalError("Audio Asset could not be found") }
+            let playAudio = SCNAction.playAudio(audioSource, waitForCompletion: false)
+
+  
+        
+        
+        let scaleThenRotateAndHover = SCNAction.group([playAudio, scaleAction, repeatForever])
+        
+        return scaleThenRotateAndHover
+    }
+    
+
+    
+    func createPumpkin(withObjectAnchor objectAnchor: ARObjectAnchor) -> SCNNode {
+        let pumpkinScene = SCNScene(named: "art.scnassets/Halloween_Pumpkin_copy.scn")!
+        let pumpkinNode = pumpkinScene.rootNode.childNode(withName: "Halloween_Pumpkin", recursively: true)!
+        pumpkinNode.position = SCNVector3(objectAnchor.referenceObject.center.x, 0.0, objectAnchor.referenceObject.center.z)
+        return pumpkinNode
+    }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user

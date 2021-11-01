@@ -1,0 +1,26 @@
+{
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "resources" : [
+    {
+      "filename" : "Birdhouse.arobject"
+    },
+    {
+      "filename" : "Birds.arobject"
+    },
+    {
+      "filename" : "Centrepiece.arobject"
+    },
+    {
+      "filename" : "FlowerPainting.arobject"
+    },
+    {
+      "filename" : "Newbat.arobject"
+    },
+    {
+      "filename" : "Pistol.arobject"
+    }
+  ]
+}
